@@ -1,0 +1,45 @@
+# Load libraries
+library(caret)
+library(randomForest)
+
+# Load wine dataset
+data(wine)
+
+# Check the structure of the dataset
+str(wine)
+
+# Preprocess data
+# You may need to handle missing values, scale/normalize features, encode categorical variables, etc.
+
+# Split data into training and testing sets
+set.seed(123)
+trainIndex <- createDataPartition(wine$quality, p = .8, 
+                                  list = FALSE, 
+                                  times = 1)
+data_train <- wine[ trainIndex,]
+data_test  <- wine[-trainIndex,]
+
+# Define cross-validation folds
+folds <- createFolds(data_train$quality, k = 10)
+
+# Define the tuning grid
+tuneGrid <- expand.grid(mtry = c(2, 3, 4, 5, 6))
+
+# Train a random forest model using cross-validation and hyperparameter tuning
+model <- train(quality ~ ., 
+               data = data_train, 
+               method = "rf",
+               trControl = trainControl(method = "cv", index = folds),
+               tuneGrid = tuneGrid)
+
+# Print the best tuning parameters
+print(model)
+
+# Make predictions on test set
+predictions <- predict(model, data_test)
+
+# Evaluate the model
+confusionMatrix(predictions, data_test$quality)
+
+# Optional: Feature importance plot
+varImpPlot(model)
